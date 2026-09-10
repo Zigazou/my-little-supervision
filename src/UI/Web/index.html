@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Little Supervision</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>My Little Supervision</h1>
+    <p id="activity" role="status"></p>
+  </header>
+  <main>
+    <p id="error" role="alert" hidden></p>
+    <nav aria-label="Actions">
+      <button id="refresh" data-text="Action.Refresh"></button>
+      <label><input type="checkbox" id="pause"><span data-text="Action.Pause"></span></label>
+      <button id="export" data-text="Action.Export"></button>
+    </nav>
+    <details>
+      <summary data-text="Web.Configuration"></summary>
+      <form id="configuration">
+        <label for="path" data-text="Web.ConfigurationPath"></label>
+        <input id="path" type="text" required spellcheck="false">
+        <button type="submit" data-text="Action.Open"></button>
+        <button type="button" id="reload" data-text="Action.Reload"></button>
+      </form>
+      <p id="logPath"></p>
+    </details>
+    <section class="filters" aria-label="Filters">
+      <label for="group" data-text="Label.Group"></label><select id="group"></select>
+      <label for="search" data-text="Label.Search"></label><input id="search" type="search">
+      <label><input id="incidents" type="checkbox"><span data-text="Label.ErrorsOnly"></span></label>
+    </section>
+    <p id="summary"></p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th data-text="Column.Name"></th>
+            <th data-text="Column.Type"></th>
+            <th data-text="Column.Target"></th>
+            <th data-text="Column.Status"></th>
+            <th data-text="Column.Ping"></th>
+            <th data-text="Column.Service"></th>
+            <th data-text="Column.Http"></th>
+            <th data-text="Column.Checked"></th>
+          </tr>
+        </thead>
+        <tbody id="checks"></tbody>
+      </table>
+    </div>
+    <div class="panels">
+      <section>
+        <h2 data-text="Tab.Details"></h2>
+        <pre id="details"></pre>
+      </section>
+      <section>
+        <h2 data-text="Tab.History"></h2>
+        <p data-text="Label.HistoryNote"></p>
+        <div class="table-scroll history">
+          <table>
+            <thead>
+              <tr>
+                <th data-text="Column.Checked"></th>
+                <th data-text="Column.Status"></th>
+                <th data-text="Column.Duration"></th>
+                <th data-text="Column.Message"></th>
+              </tr>
+            </thead>
+            <tbody id="history"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <section>
+      <h2 data-text="Tab.Log"></h2>
+      <pre id="journal"></pre>
+    </section>
+  </main>
+</body>
+
+</html>

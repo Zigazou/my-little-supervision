@@ -1,0 +1,154 @@
+:root {
+  color-scheme: light;
+  font-family : system-ui, sans-serif;
+  color       : #243349;
+  background  : #f4f6fa;
+}
+
+body {
+  margin: 0;
+}
+
+header {
+  padding   : 1rem 2rem;
+  background: #233850;
+  color     : white;
+}
+
+h1 {
+  margin   : 0;
+  font-size: 1.5rem;
+}
+
+main {
+  padding  : 1rem 2rem;
+  max-width: 1500px;
+  margin   : auto;
+}
+
+nav,
+.filters,
+form {
+  display    : flex;
+  flex-wrap  : wrap;
+  align-items: center;
+  gap        : .8rem;
+  margin     : 1rem 0;
+}
+
+button,
+input,
+select {
+  font   : inherit;
+  padding: .45rem;
+}
+
+button {
+  cursor       : pointer;
+  color        : #173e6a;
+  background   : white;
+  border       : 1px solid #889bb2;
+  border-radius: .25rem;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor : default;
+}
+
+:focus-visible {
+  outline       : 3px solid #b05b00;
+  outline-offset: 2px;
+}
+
+#path {
+  flex     : 1;
+  min-width: 15rem;
+}
+
+.table-scroll {
+  overflow  : auto;
+  background: white;
+  border    : 1px solid #d4dce6;
+}
+
+table {
+  border-collapse: collapse;
+  width          : 100%;
+  text-align     : left;
+}
+
+th,
+td {
+  padding      : .65rem;
+  border-bottom: 1px solid #e2e7ee;
+  overflow-wrap: anywhere;
+}
+
+th {
+  background: #e9eef5;
+}
+
+tr.selected {
+  background: #e7f1ff;
+}
+
+.status {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status::before {
+  content     : '●';
+  margin-right: .4rem;
+  color       : #68778b;
+}
+
+.status.Online::before {
+  color: #21803c;
+}
+
+.status.Degraded::before {
+  color: #9b6300;
+}
+
+.status.Offline::before,
+.status.Error::before {
+  color: #c12828;
+}
+
+.panels {
+  display              : grid;
+  grid-template-columns: 1fr 1fr;
+  gap                  : 1.5rem;
+}
+
+pre {
+  white-space  : pre-wrap;
+  overflow-wrap: anywhere;
+  font         : inherit;
+}
+
+.history,
+#journal {
+  max-height: 22rem;
+  overflow  : auto;
+}
+
+#error {
+  color     : #8d1717;
+  background: #ffeded;
+  padding   : 1rem;
+  border    : 1px solid #dfb4b4;
+}
+
+@media (max-width: 800px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+
+  main,
+  header {
+    padding: 1rem;
+  }
+}

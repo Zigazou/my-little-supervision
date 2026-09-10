@@ -45,3 +45,29 @@ required.
 9. Check log folder/rotation and a non-writable log location. Confirm errors
    remain visible without stopping checks and no request secrets appear in logs.
 10. Close while checks run; verify the PowerShell process exits after cleanup.
+
+## Browser tests
+
+Run `pwsh -NoProfile -File ./tests/Run-WebTests.ps1` on Linux, or
+`powershell.exe -NoProfile -File .\tests\Run-WebTests.ps1` on Windows. The suite
+starts the real Web launcher in a runspace and checks local assets, localization,
+Host/Origin/fetch-site/CSRF rejection, JSON validation, slow-client isolation,
+HTTP timeout alongside successful TCP, history, CSV escaping/filtering, pause,
+manual refresh and deferred configuration replacement. No browser automation
+package is a project dependency.
+
+Manual browser acceptance:
+
+1. Start with `./start.sh`, verify the printed loopback address opens, then repeat
+   with `-NoBrowser` and a different `-Port`. An occupied port must fail clearly.
+2. Use keyboard navigation to select rows, search literal punctuation, filter
+   groups/incidents, inspect history, and download filtered CSV with Unicode.
+3. Pause and refresh. Change configuration during a slow check; ensure the page
+   remains responsive and replacement waits for active checks. Invalid PSD1 must
+   keep the existing monitor. Recover from an invalid startup file.
+4. Reload in French and English; verify translated controls, messages and errors.
+   Check narrow windows and zoom without hiding access to table columns.
+5. Close the tab and reopen the address; monitoring should continue. Press Ctrl+C
+   in the terminal and verify the port is released and browser reports disconnect.
+6. Verify Linux logs under XDG_STATE_HOME and its documented fallback. Run Web
+   on Windows PowerShell 5.1 as well as the existing WPF acceptance checklist.

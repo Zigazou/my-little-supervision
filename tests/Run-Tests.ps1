@@ -31,7 +31,7 @@ $requires = @(
   'Checks/Checks.ps1',
   'Core/Monitor.ps1',
   'Logging/Logging.ps1',
-  'UI/Controller.ps1'
+  'UI/Wpf/Controller.ps1'
 )
 
 foreach ($path in $requires) {
@@ -203,7 +203,7 @@ try {
   $strings = Import-PowerShellDataFile (Join-Path $root 'src/Localization/fr-FR.psd1')
   $english = Import-PowerShellDataFile (Join-Path $root 'src/Localization/en-US.psd1')
   Assert-True (@($english.Keys | Where-Object { -not $strings.ContainsKey($_) }).Count -eq 0) 'Translation key parity'
-  $xaml = Get-Content -LiteralPath (Join-Path $root 'src/UI/MainWindow.xaml') -Raw
+  $xaml = Get-Content -LiteralPath (Join-Path $root 'src/UI/Wpf/MainWindow.xaml') -Raw
   $null = [xml] $xaml
   $resourceKeys = [regex]::Matches($xaml, '\{DynamicResource ([^}]+)\}')
   Assert-True (@($resourceKeys | Where-Object { -not $english.ContainsKey($_.Groups[1].Value) }).Count -eq 0) 'All XAML translation keys exist'
@@ -315,7 +315,7 @@ function Invoke-MonitorCheck {
   }
   if ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) {
     Add-Type -AssemblyName PresentationFramework
-    $reader = [Xml.XmlReader]::Create((Join-Path $root 'src/UI/MainWindow.xaml'))
+    $reader = [Xml.XmlReader]::Create((Join-Path $root 'src/UI/Wpf/MainWindow.xaml'))
     try { $window = [Windows.Markup.XamlReader]::Load($reader) }
     finally { $reader.Dispose() }
     Assert-True ($null -ne $window.FindName('ChecksDataGrid')) 'WPF XAML loads'

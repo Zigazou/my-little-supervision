@@ -647,7 +647,7 @@ function Show-MonitorWindow {
     'my-little-supervision/Logs'
 
   $reader = [Xml.XmlReader]::Create(
-    (Join-Path $SourceDirectory 'UI/MainWindow.xaml')
+    (Join-Path $SourceDirectory 'UI/Wpf/MainWindow.xaml')
   )
 
   try {

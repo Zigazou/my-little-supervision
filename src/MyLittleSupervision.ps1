@@ -1,10 +1,10 @@
-﻿# Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-Starts the Windows monitoring dashboard without changing machine settings.
+Starts the native Windows or local browser monitoring dashboard.
 
 .DESCRIPTION
-Requires Windows PowerShell 5.1 or later with WPF and an STA thread. Loads
+Uses WPF/STA on Windows and PowerShell 7 with a browser on Linux. Loads
 application components and validates configuration. If loading fails, opens an
 empty dashboard with a localized error so the user can select another file.
 
@@ -12,36 +12,55 @@ empty dashboard with a localized error so the user can select another file.
 Path to a declarative PSD1 configuration file. Defaults to config/example.psd1
 relative to the application source directory.
 
+.PARAMETER UI
+Auto selects WPF on Windows and Web on Linux. Web is also available on Windows.
+
+.PARAMETER Port
+Unprivileged loopback port for the Web interface; defaults to 8123.
+
+.PARAMETER NoBrowser
+Prints the Web address without attempting to launch a browser.
+
 .OUTPUTS
 None.
 #>
 [CmdletBinding()]
 param(
   [string] $ConfigurationPath = `
-  (Join-Path $PSScriptRoot '../config/example.psd1')
+  (Join-Path $PSScriptRoot '../config/example.psd1'),
+  [ValidateSet('Auto', 'Wpf', 'Web')][string] $UI = 'Auto',
+  [ValidateRange(1024, 65535)][int] $Port = 8123,
+  [switch] $NoBrowser
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
-  throw 'My Little Supervision requires Windows and WPF.'
+# Determine if the script is running on a Windows plateform
+$windowsPlatform = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
+
+if (
+  -not $windowsPlatform -and
+  $PSVersionTable.PSVersion.Major -lt 7
+) {
+  throw 'Linux requires PowerShell 7 or later.'
 }
 
-if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
-  throw (
-    'Start with ' +
-    'powershell.exe -NoProfile -STA -File src\MyLittleSupervision.ps1.'
-  )
+if ($UI -eq 'Auto') {
+  $UI = if ($windowsPlatform) { 'Wpf' } else { 'Web' }
 }
 
-# Load required .NET assemblies for WPF and HTTP client functionality.
-Add-Type -AssemblyName @(
-  'PresentationFramework'
-  'PresentationCore'
-  'WindowsBase'
-  'System.Net.Http'
-)
+if ($UI -eq 'Wpf') {
+  if (-not $windowsPlatform) {
+    throw 'WPF requires Windows. Use -UI Web on Linux.'
+  }
+
+  if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
+    throw 'Start Windows PowerShell with -STA to use WPF.'
+  }
+
+  Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
+}
 
 # Load application components such as configuration, localization, logging,
 # checks, core monitor, and UI controller.
@@ -50,8 +69,7 @@ $components = @(
   'Localization/Localization.ps1',
   'Logging/Logging.ps1',
   'Checks/Checks.ps1',
-  'Core/Monitor.ps1',
-  'UI/Controller.ps1'
+  'Core/Monitor.ps1'
 )
 
 foreach ($component in $components) {
@@ -87,9 +105,25 @@ catch {
   }
 }
 
-# Show the main monitoring window with the resolved configuration and state.
-Show-MonitorWindow `
-  -Configuration $configuration `
-  -Path $ConfigurationPath `
-  -SourceDirectory $PSScriptRoot `
-  -ConfigurationFailed $configurationFailed
+if ($UI -eq 'Wpf') {
+  # Run with the Windows Presentation Foundations.
+  . (Join-Path $PSScriptRoot 'UI/Wpf/Controller.ps1')
+
+  Show-MonitorWindow `
+    -Configuration $configuration `
+    -Path $ConfigurationPath `
+    -SourceDirectory $PSScriptRoot `
+    -ConfigurationFailed $configurationFailed
+}
+else {
+  # Run with the web view.
+  . (Join-Path $PSScriptRoot 'UI/Web/Controller.ps1')
+
+  Show-WebMonitor `
+    -Configuration $configuration `
+    -Path $ConfigurationPath `
+    -SourceDirectory $PSScriptRoot `
+    -ConfigurationFailed $configurationFailed `
+    -Port $Port `
+    -NoBrowser:$NoBrowser
+}

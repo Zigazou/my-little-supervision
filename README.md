@@ -1,7 +1,8 @@
 # My Little Supervision
 
-A Windows monitoring dashboard built with Windows PowerShell 5.1, WPF/XAML,
-and declarative PSD1 configuration. It needs no administrator privileges,
+A monitoring dashboard with Windows PowerShell 5.1 and WPF/XAML on Windows,
+and PowerShell 7 with a local browser interface on Linux. Both interfaces share
+the same monitoring core and declarative PSD1 configuration. It needs no administrator privileges,
 third-party modules, installation service, or machine-wide configuration.
 
 ## Start
@@ -28,9 +29,61 @@ The default example uses French and only pings `127.0.0.1`. HTTP and TCP example
 are disabled until you customize and enable them. Select `en-US` in configuration
 for English.
 
+## Linux and browser startup
+
+Linux requires **PowerShell 7 or later** (`pwsh`) and a modern browser. The
+application uses only PowerShell/.NET and local HTML/CSS/JavaScript: no Node.js,
+npm, Python, SDK, web framework, CDN or external web server is required.
+PowerShell installation follows your distribution's supported procedure; normal
+application use requires neither root nor changes to system configuration.
+
+From the project root:
+
+```sh
+./start.sh
+./start.sh -ConfigurationPath /home/me/checks.psd1 -NoBrowser -Port 8123
+# Equivalent when pwsh is already available:
+pwsh -NoProfile -File ./src/MyLittleSupervision.ps1 -UI Web -NoBrowser
+```
+
+`-UI Auto` (the default) selects WPF on Windows and Web on Linux. `-UI Wpf` is
+Windows-only and requires STA. `-UI Web` also works on Windows PowerShell 5.1.
+Presentation files are separated by interface: WPF files live under
+`src/UI/Wpf/`, and browser files under `src/UI/Web/`.
+
+The Web server binds **only `127.0.0.1`**, on port 8123 by default. Use `-Port`
+with an available port from 1024 to 65535 if it is occupied. Open the printed
+`http://127.0.0.1:8123/` address, using that exact host. Browser launch is optional
+and failure does not stop monitoring. `-NoBrowser` suppresses it. Press **Ctrl+C
+in the launching terminal** to stop the server and dispose monitoring workers;
+closing the browser tab does not stop monitoring. Active network work may take
+up to its configured timeout to finish during shutdown.
+
+The browser supports group/search/incident filters, details, session history and
+journal, pause, manual refresh, and filtered CSV download. Expand Configuration
+to enter an **absolute local PSD1 path**, or reload the current file. The file
+must already exist on the machine running PowerShell; it is not uploaded or
+executed. Invalid input retains the current monitor, and valid replacements wait
+for active checks before clearing history. The browser displays the log folder
+path; use your file manager to open it. File dialogs and folder-opening actions
+remain native WPF features.
+
+Linux logs use `$XDG_STATE_HOME/my-little-supervision/Logs`, falling back to
+`~/.local/state/my-little-supervision/Logs` when XDG_STATE_HOME is unset or not
+absolute. Configuration remains in the explicitly selected PSD1 file (the
+repository example is the default); no configuration is copied into a system
+or user directory. There is no persistent browser data or history database.
+Windows logs, for either interface, remain under `%LOCALAPPDATA%`.
+
+Host and Origin validation, browser fetch-site checks, a per-session CSRF token
+on JSON mutations, and a restrictive content security policy protect the local
+API. Request headers/bodies, connection lifetimes and simultaneous connections
+are bounded. Only fixed asset/API routes are served. Labels and diagnostics are
+rendered as text. Remote access is deliberately unsupported.
+
 ## Dashboard
 
-The layout follows [the interface proposal](docs/project-interface.png):
+The Windows layout follows [the interface proposal](docs/project-interface.png):
 
 - Groups in the sidebar, a synchronized group selector, literal text search over
   names and targets, and an incidents filter (slow, offline, or error).
@@ -127,6 +180,14 @@ Run the dependency-free suite on Windows:
 powershell.exe -NoProfile -STA -File .\tests\Run-Tests.ps1
 ```
 
+On Linux, run both suites with PowerShell 7:
+
+```sh
+pwsh -NoProfile -File ./tests/Run-Tests.ps1
+pwsh -NoProfile -File ./tests/Run-WebTests.ps1
+```
+
+The Web suite also runs on Windows PowerShell 5.1 without WPF/STA.
 Tests use loopback fixtures and need no public internet or administrator rights.
 See [tests/README.md](tests/README.md) for manual WPF checks and environment limits.
 See [docs/architecture.md](docs/architecture.md) for component responsibilities.
