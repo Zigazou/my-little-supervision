@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+﻿# Requires -Version 5.1
 <#
 .SYNOPSIS
 Starts the Windows monitoring dashboard without changing machine settings.
@@ -16,23 +16,72 @@ relative to the application source directory.
 None.
 #>
 [CmdletBinding()]
-param([string] $ConfigurationPath = (Join-Path $PSScriptRoot '../config/example.psd1'))
+param(
+  [string] $ConfigurationPath = `
+  (Join-Path $PSScriptRoot '../config/example.psd1')
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) { throw 'My Little Supervision requires Windows and WPF.' }
-if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') { throw 'Start with powershell.exe -NoProfile -STA -File src\MyLittleSupervision.ps1.' }
-Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Net.Http
-foreach ($component in @('Configuration/Configuration.ps1', 'Localization/Localization.ps1', 'Logging/Logging.ps1', 'Checks/Checks.ps1', 'Core/Monitor.ps1', 'UI/Controller.ps1')) {
-    . (Join-Path $PSScriptRoot $component)
+
+if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
+  throw 'My Little Supervision requires Windows and WPF.'
 }
-$ConfigurationPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigurationPath)
+
+if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
+  throw (
+    'Start with ' +
+    'powershell.exe -NoProfile -STA -File src\MyLittleSupervision.ps1.'
+  )
+}
+
+Add-Type -AssemblyName @(
+  'PresentationFramework'
+  'PresentationCore'
+  'WindowsBase'
+  'System.Net.Http'
+)
+
+$components = @(
+  'Configuration/Configuration.ps1',
+  'Localization/Localization.ps1',
+  'Logging/Logging.ps1',
+  'Checks/Checks.ps1',
+  'Core/Monitor.ps1',
+  'UI/Controller.ps1'
+)
+
+foreach ($component in $components) {
+  . (Join-Path $PSScriptRoot $component)
+}
+
+$pathProvider = $ExecutionContext.SessionState.Path
+$ConfigurationPath = $pathProvider.GetUnresolvedProviderPathFromPSPath(
+  $ConfigurationPath
+)
 $configurationFailed = $false
-try { $configuration = Import-MonitorConfiguration $ConfigurationPath }
-catch {
-    $configurationFailed = $true
-    $language = 'en-US'
-    if ([Globalization.CultureInfo]::CurrentUICulture.Name -like 'fr-*') { $language = 'fr-FR' }
-    $configuration = @{ Language = $language; RefreshSeconds = 30; MaxConcurrency = 4; Checks = @() }
+
+try {
+  $configuration = Import-MonitorConfiguration $ConfigurationPath
 }
-Show-MonitorWindow -Configuration $configuration -Path $ConfigurationPath -SourceDirectory $PSScriptRoot -ConfigurationFailed $configurationFailed
+catch {
+  $configurationFailed = $true
+  $language = 'en-US'
+
+  if ([Globalization.CultureInfo]::CurrentUICulture.Name -like 'fr-*') {
+    $language = 'fr-FR'
+  }
+
+  $configuration = @{
+    Language       = $language
+    RefreshSeconds = 30
+    MaxConcurrency = 4
+    Checks         = @()
+  }
+}
+
+Show-MonitorWindow `
+  -Configuration $configuration `
+  -Path $ConfigurationPath `
+  -SourceDirectory $PSScriptRoot `
+  -ConfigurationFailed $configurationFailed
