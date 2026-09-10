@@ -1,3 +1,6 @@
+# Version 1 sample configuration loaded by default by MyLittleSupervision.ps1.
+# Only local Ping is enabled; replace service targets before enabling other checks.
+# Configuration fields and defaults are documented in README.md.
 @{
     ConfigurationVersion = 1
     Language = 'fr-FR'

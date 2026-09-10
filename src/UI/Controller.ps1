@@ -1,21 +1,90 @@
-﻿Set-StrictMode -Version Latest
+﻿<#
+.SYNOPSIS
+Defines WPF event handling and dashboard presentation.
+
+.DESCRIPTION
+Dot-source after configuration, localization, logging, checks and scheduler
+helpers. Show-MonitorWindow owns script-scoped UI state; UI helpers run on its
+dispatcher thread.
+
+.OUTPUTS
+None.
+#>
+
+Set-StrictMode -Version Latest
 
 function Get-UiText {
+    <#
+    .SYNOPSIS
+    Resolves a resource using the active UI language.
+
+    .DESCRIPTION
+    Uses script-scoped controller state initialized by Show-MonitorWindow; call
+    on the WPF UI thread.
+
+    .PARAMETER Key
+    Stable localization resource key.
+
+    .OUTPUTS
+    System.String. Localized text, or the key when missing.
+    #>
     param([string] $Key)
     Get-Translation $script:strings $Key
 }
 
 function Show-ActionError {
+    <#
+    .SYNOPSIS
+    Displays a localized error dialog owned by the main window.
+
+    .DESCRIPTION
+    Uses script-scoped controller state initialized by Show-MonitorWindow; call
+    on the WPF UI thread.
+
+    .PARAMETER Key
+    Resource key for the error message; defaults to Error.Action.
+
+    .OUTPUTS
+    None.
+    #>
     param([string] $Key = 'Error.Action')
     $null = [Windows.MessageBox]::Show($script:window, (Get-UiText $Key), (Get-UiText 'MainWindow.Title'), 'OK', 'Error')
 }
 
 function Get-ResultMessage {
+    <#
+    .SYNOPSIS
+    Formats a localized monitoring result message.
+
+    .DESCRIPTION
+    Uses script-scoped controller state initialized by Show-MonitorWindow; call
+    on the WPF UI thread.
+
+    .PARAMETER Result
+    Normalized result with Message and Details.Code; Code fills the resource
+    format placeholder.
+
+    .OUTPUTS
+    System.String. Formatted message text.
+    #>
     param($Result)
     (Get-UiText ('Message.' + $Result.Message)) -f $Result.Details.Code
 }
 
 function Update-Details {
+    <#
+    .SYNOPSIS
+    Refreshes details and history for the selected check.
+
+    .DESCRIPTION
+    Clears details when no row is selected; otherwise calculates the success
+    rate from retained history and adds the Ping interpretation note where
+    applicable. Uses script-scoped controller state initialized by
+    Show-MonitorWindow; call on the WPF UI thread.
+
+    .OUTPUTS
+    None.
+    #>
     $selected = $script:controls.ChecksDataGrid.SelectedItem
     $script:controls.HistoryDataGrid.ItemsSource = $null
     if ($null -eq $selected) {
@@ -38,6 +107,19 @@ function Update-Details {
 }
 
 function Update-CheckRows {
+    <#
+    .SYNOPSIS
+    Rebuilds the filtered check table and status summary.
+
+    .DESCRIPTION
+    Applies group, literal case-insensitive search and incident filters.
+    Preserves selection by check name where possible and refreshes details.
+    Summary counts include all results. Uses script-scoped controller state
+    initialized by Show-MonitorWindow; call on the WPF UI thread.
+
+    .OUTPUTS
+    None.
+    #>
     $selectedName = $null
     if ($null -ne $script:controls.ChecksDataGrid.SelectedItem) { $selectedName = $script:controls.ChecksDataGrid.SelectedItem.Name }
     $search = $script:controls.SearchTextBox.Text
@@ -72,6 +154,25 @@ function Update-CheckRows {
 }
 
 function Get-CheckGroupOptions {
+    <#
+    .SYNOPSIS
+    Builds counted group choices for the UI filters.
+
+    .DESCRIPTION
+    Emits the all-groups option first with an empty filter value, followed by
+    groups sorted by name. Labels include counts while values preserve
+    configured group names.
+
+    .PARAMETER Configuration
+    Validated configuration whose Checks contain normalized Group values.
+
+    .PARAMETER AllLabel
+    Localized label for the option that includes every check.
+
+    .OUTPUTS
+    System.Management.Automation.PSCustomObject. Options with Label and Value
+    properties.
+    #>
     param([hashtable] $Configuration, [string] $AllLabel)
     [pscustomobject]@{ Label = ('{0} ({1})' -f $AllLabel, $Configuration.Checks.Count); Value = '' }
     # Windows PowerShell 5.1 requires an expression to group by a hashtable key.
@@ -81,6 +182,25 @@ function Get-CheckGroupOptions {
 }
 
 function Set-UiConfiguration {
+    <#
+    .SYNOPSIS
+    Replaces scheduler state and applies UI resources.
+
+    .DESCRIPTION
+    Disposes the previous scheduler, loads translations, creates initial results
+    and resets group choices. Normally called after active checks finish. Uses
+    script-scoped controller state initialized by Show-MonitorWindow; call on
+    the WPF UI thread.
+
+    .PARAMETER Configuration
+    Validated configuration to display and monitor.
+
+    .PARAMETER Path
+    Configuration file path retained for reload and open-folder actions.
+
+    .OUTPUTS
+    None.
+    #>
     param([hashtable] $Configuration, [string] $Path)
     if ($null -ne $script:state) { Close-MonitorState $script:state }
     $script:configurationPath = $Path
@@ -111,6 +231,22 @@ function Set-UiConfiguration {
 }
 
 function Request-Configuration {
+    <#
+    .SYNOPSIS
+    Validates and queues a configuration replacement.
+
+    .DESCRIPTION
+    On success clears queued checks and defers replacement until the current
+    cycle ends. On failure displays a localized error and retains the active
+    configuration. Uses script-scoped controller state initialized by
+    Show-MonitorWindow; call on the WPF UI thread.
+
+    .PARAMETER Path
+    Literal path to the PSD1 configuration requested by the user.
+
+    .OUTPUTS
+    None.
+    #>
     param([string] $Path)
     try {
         $configuration = Import-MonitorConfiguration $Path
@@ -122,12 +258,38 @@ function Request-Configuration {
 }
 
 function Open-ConfigurationDialog {
+    <#
+    .SYNOPSIS
+    Prompts for a PSD1 file and requests its configuration.
+
+    .DESCRIPTION
+    Cancellation leaves the current configuration intact. Uses script-scoped
+    controller state initialized by Show-MonitorWindow; call on the WPF UI
+    thread.
+
+    .OUTPUTS
+    None.
+    #>
     $dialog = New-Object Microsoft.Win32.OpenFileDialog
     $dialog.Filter = Get-UiText 'Dialog.Configuration'
     if ($dialog.ShowDialog($script:window)) { Request-Configuration $dialog.FileName }
 }
 
 function Export-CheckResults {
+    <#
+    .SYNOPSIS
+    Saves the filtered check table as UTF-8 CSV.
+
+    .DESCRIPTION
+    Prompts for a destination and exports identity, group, status and check
+    time. Prefixes formula-like cell values with an apostrophe for spreadsheet
+    safety. Displays a localized error if export fails. Uses script-scoped
+    controller state initialized by Show-MonitorWindow; call on the WPF UI
+    thread.
+
+    .OUTPUTS
+    None.
+    #>
     try {
         $dialog = New-Object Microsoft.Win32.SaveFileDialog
         $dialog.Filter = Get-UiText 'Dialog.Csv'
@@ -147,6 +309,20 @@ function Export-CheckResults {
 }
 
 function Invoke-UiTick {
+    <#
+    .SYNOPSIS
+    Advances monitoring and refreshes the dashboard.
+
+    .DESCRIPTION
+    Collects results, writes safe diagnostics, retains up to 300 journal
+    entries, applies pending configuration and schedules due cycles unless
+    paused. Updates activity controls; unexpected errors stop the dispatcher
+    timer and display an error. Uses script-scoped controller state initialized
+    by Show-MonitorWindow; call on the WPF UI thread.
+
+    .OUTPUTS
+    None.
+    #>
     try {
         $received = @(Receive-MonitorResults $script:state)
         foreach ($result in $received) {
@@ -184,6 +360,32 @@ function Invoke-UiTick {
 }
 
 function Show-MonitorWindow {
+    <#
+    .SYNOPSIS
+    Creates and runs the modal WPF monitoring dashboard.
+
+    .DESCRIPTION
+    Initializes script-scoped controller state, loads XAML, wires events and
+    starts a 250 ms dispatcher timer after rendering. Requires Windows WPF
+    assemblies and an STA thread. Stops the timer and disposes monitoring state
+    when the dialog closes.
+
+    .PARAMETER Configuration
+    Validated initial configuration, or the empty fallback created after startup
+    validation fails.
+
+    .PARAMETER Path
+    Configuration file path used by reload and open-folder actions.
+
+    .PARAMETER SourceDirectory
+    Application src directory containing UI, Localization and Checks resources.
+
+    .PARAMETER ConfigurationFailed
+    True to show a localized configuration error after the window first renders.
+
+    .OUTPUTS
+    None.
+    #>
     param([hashtable] $Configuration, [string] $Path, [string] $SourceDirectory, [bool] $ConfigurationFailed)
     $script:sourceDirectory = $SourceDirectory
     $script:state = $null

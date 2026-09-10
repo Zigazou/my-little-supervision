@@ -1,4 +1,6 @@
-﻿@{
+﻿# French UI resource overrides for the canonical English keys.
+# Preserve format placeholders; missing keys fall back to en-US.psd1.
+@{
     'MainWindow.Title' = 'My Little Supervision'
     'Status.Unknown' = 'Inconnu'
     'Status.Running' = 'En cours'

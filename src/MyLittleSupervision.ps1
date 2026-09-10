@@ -2,8 +2,18 @@
 <#
 .SYNOPSIS
 Starts the Windows monitoring dashboard without changing machine settings.
+
+.DESCRIPTION
+Requires Windows PowerShell 5.1 or later with WPF and an STA thread. Loads
+application components and validates configuration. If loading fails, opens an
+empty dashboard with a localized error so the user can select another file.
+
 .PARAMETER ConfigurationPath
-Path to a declarative PSD1 configuration file.
+Path to a declarative PSD1 configuration file. Defaults to config/example.psd1
+relative to the application source directory.
+
+.OUTPUTS
+None.
 #>
 [CmdletBinding()]
 param([string] $ConfigurationPath = (Join-Path $PSScriptRoot '../config/example.psd1'))

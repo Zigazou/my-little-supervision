@@ -1,6 +1,38 @@
-﻿Set-StrictMode -Version Latest
+﻿<#
+.SYNOPSIS
+Defines declarative PSD1 validation and normalization.
+
+.DESCRIPTION
+Dot-source before loading configuration. Rejects unsupported input and produces
+the common check model consumed by the scheduler and UI.
+
+.OUTPUTS
+None.
+#>
+
+Set-StrictMode -Version Latest
 
 function Assert-ConfigurationKeys {
+    <#
+    .SYNOPSIS
+    Rejects unsupported configuration keys.
+
+    .DESCRIPTION
+    Throws at the first key outside the allowed set; required keys are checked
+    by the caller.
+
+    .PARAMETER Data
+    Hashtable whose keys are inspected.
+
+    .PARAMETER Allowed
+    Accepted key names, compared case insensitively.
+
+    .PARAMETER Context
+    Section label included in the validation error.
+
+    .OUTPUTS
+    None.
+    #>
     param([hashtable] $Data, [string[]] $Allowed, [string] $Context)
     foreach ($key in $Data.Keys) {
         if ($key -notin $Allowed) { throw "${Context}: unsupported key '$key'." }
@@ -8,6 +40,32 @@ function Assert-ConfigurationKeys {
 }
 
 function Get-IntegerSetting {
+    <#
+    .SYNOPSIS
+    Reads a bounded integer setting or its default.
+
+    .DESCRIPTION
+    Accepts Int32 and Int64 values within inclusive bounds; throws for other
+    supplied values. The caller must supply a valid default.
+
+    .PARAMETER Data
+    Configuration hashtable containing the optional setting.
+
+    .PARAMETER Key
+    Name of the setting to retrieve.
+
+    .PARAMETER Default
+    Value returned when the key is absent.
+
+    .PARAMETER Minimum
+    Smallest accepted supplied value.
+
+    .PARAMETER Maximum
+    Largest accepted supplied value.
+
+    .OUTPUTS
+    System.Int32. The supplied value or default.
+    #>
     param([hashtable] $Data, [string] $Key, [int] $Default, [int] $Minimum, [int] $Maximum)
     if (-not $Data.ContainsKey($Key)) { return $Default }
     $value = $Data[$Key]
@@ -18,8 +76,22 @@ function Get-IntegerSetting {
 }
 
 function Import-MonitorConfiguration {
-    <# .SYNOPSIS
-    Imports declarative monitoring configuration and validates every entry before use.
+    <#
+    .SYNOPSIS
+    Loads and validates a declarative monitoring configuration.
+
+    .DESCRIPTION
+    Imports a PSD1 data file without executing arbitrary configuration code.
+    Validates version 1, check-specific fields and limits, then adds defaults
+    and normalized targets. Import or validation failures throw before a
+    configuration is returned.
+
+    .PARAMETER Path
+    Literal path to the PSD1 file to load.
+
+    .OUTPUTS
+    System.Collections.Hashtable. Language, refresh interval, concurrency limit
+    and validated Checks.
     #>
     [CmdletBinding()]
     param([Parameter(Mandatory)][string] $Path)

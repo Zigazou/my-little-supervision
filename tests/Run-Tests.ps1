@@ -1,4 +1,17 @@
 ﻿#Requires -Version 5.1
+<#
+.SYNOPSIS
+Runs dependency-free supervision regression checks.
+
+.DESCRIPTION
+Exercises parsing, configuration, localization, logging and scheduling with temporary fixtures. Optional network cases use loopback only. Windows also validates WPF loading. Throws on the first failure and removes temporary files in finally.
+
+.PARAMETER SkipNetwork
+Omits loopback Ping, HTTP and TCP cases; scheduler and other non-network checks still run.
+
+.OUTPUTS
+System.String. Assertion progress and the final passed count.
+#>
 [CmdletBinding()]
 param([switch] $SkipNetwork)
 Set-StrictMode -Version Latest
@@ -7,12 +20,44 @@ $root = Split-Path -Parent $PSScriptRoot
 foreach ($path in @('Configuration/Configuration.ps1', 'Localization/Localization.ps1', 'Checks/Checks.ps1', 'Core/Monitor.ps1', 'Logging/Logging.ps1', 'UI/Controller.ps1')) { . (Join-Path $root "src/$path") }
 $script:passed = 0
 function Assert-True {
+    <#
+    .SYNOPSIS
+    Records a passing assertion or terminates the test run.
+
+    .DESCRIPTION
+    Increments the script-scoped passed counter when the condition succeeds; otherwise throws with the test name.
+
+    .PARAMETER Condition
+    Boolean condition that must be true.
+
+    .PARAMETER Name
+    Human-readable assertion name used in PASS and FAIL messages.
+
+    .OUTPUTS
+    System.String. A PASS message on success.
+    #>
     param([bool] $Condition, [string] $Name)
     if (-not $Condition) { throw "FAIL: $Name" }
     $script:passed++
     Write-Output "PASS: $Name"
 }
 function Assert-Rejected {
+    <#
+    .SYNOPSIS
+    Asserts that a PSD1 configuration is rejected.
+
+    .DESCRIPTION
+    Writes a temporary fixture at script:testPath and passes it through the production importer. Any import exception counts as rejection.
+
+    .PARAMETER Content
+    PSD1 source text to write to the temporary configuration file.
+
+    .PARAMETER Name
+    Assertion name passed to Assert-True.
+
+    .OUTPUTS
+    System.String. A PASS message when import fails as expected.
+    #>
     param([string] $Content, [string] $Name)
     Set-Content -LiteralPath $script:testPath -Value $Content -Encoding UTF8
     $rejected = $false
@@ -99,6 +144,19 @@ try {
     $fixture = Join-Path $temporary 'Worker.ps1'
     Set-Content -LiteralPath $fixture -Encoding UTF8 -Value @'
 function Invoke-MonitorCheck {
+    <#
+    .SYNOPSIS
+    Returns a deterministic scheduler fixture result.
+
+    .DESCRIPTION
+    Waits briefly to exercise concurrency; the check named broken throws to test failure isolation.
+
+    .PARAMETER Check
+    Fixture check containing Name, Type and Target.
+
+    .OUTPUTS
+    System.Management.Automation.PSCustomObject. A synthetic Online result.
+    #>
     param($Check)
     Start-Sleep -Milliseconds 30
     if ($Check.Name -eq 'broken') { throw 'Fixture failure' }

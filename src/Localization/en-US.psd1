@@ -1,4 +1,6 @@
-﻿@{
+﻿# Canonical English UI resources and fallback values.
+# Keep keys stable; format placeholders are populated by Controller.ps1.
+@{
     'MainWindow.Title' = 'My Little Supervision'
     'Status.Unknown' = 'Unknown'
     'Status.Running' = 'Running'

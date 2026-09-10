@@ -1,7 +1,49 @@
-﻿Set-StrictMode -Version Latest
+﻿<#
+.SYNOPSIS
+Defines network check execution and result normalization.
+
+.DESCRIPTION
+Dot-source from the launcher or a worker runspace. Loads System.Net.Http and
+provides synchronous, timeout-bounded checks without UI access.
+
+.OUTPUTS
+None.
+#>
+
+Set-StrictMode -Version Latest
 Add-Type -AssemblyName System.Net.Http
 
 function New-CheckResult {
+    <#
+    .SYNOPSIS
+    Builds a normalized monitoring result.
+
+    .DESCRIPTION
+    Copies check identity, records a UTC timestamp and rounds duration to one
+    decimal place. Online and Degraded statuses count as successful.
+
+    .PARAMETER Check
+    Validated check containing Name, Type and Target.
+
+    .PARAMETER Status
+    Normalized status, such as Online, Degraded, Offline, Error, Unknown or
+    Disabled.
+
+    .PARAMETER Message
+    Untranslated message suffix resolved by the UI under the Message. resource
+    prefix.
+
+    .PARAMETER DurationMs
+    Elapsed milliseconds; defaults to zero for synthetic results.
+
+    .PARAMETER Code
+    Optional HTTP status, Ping reply status or safe exception type stored in
+    Details.Code. Defaults to null.
+
+    .OUTPUTS
+    System.Management.Automation.PSCustomObject. Name, Type, Target, Status,
+    Success, Message, DurationMs, Timestamp and Details.
+    #>
     param([hashtable] $Check, [string] $Status, [string] $Message, [double] $DurationMs = 0, [object] $Code = $null)
     [pscustomobject]@{
         Name = $Check.Name; Type = $Check.Type; Target = $Check.Target
@@ -12,8 +54,23 @@ function New-CheckResult {
 }
 
 function Invoke-MonitorCheck {
-    <# .SYNOPSIS
-    Executes one validated check with a deadline and returns a normalized result.
+    <#
+    .SYNOPSIS
+    Executes one validated Ping, HTTP or TCP check.
+
+    .DESCRIPTION
+    Runs synchronously with the configured timeout; callers should use a worker
+    runspace. Disabled checks return immediately. Network failures become
+    normalized results, slow successes become Degraded, and disposable network
+    resources are released. HTTP redirects are not followed.
+
+    .PARAMETER Check
+    Normalized entry from Import-MonitorConfiguration, including Enabled,
+    TimeoutSeconds, SlowThresholdMs and the fields required by its Type.
+
+    .OUTPUTS
+    System.Management.Automation.PSCustomObject. One normalized check result
+    with an untranslated message key.
     #>
     [CmdletBinding()]
     param([Parameter(Mandatory)][hashtable] $Check)
@@ -32,7 +89,8 @@ function Invoke-MonitorCheck {
             'Http' {
                 Add-Type -AssemblyName System.Net.Http
                 $handler = New-Object System.Net.Http.HttpClientHandler
-                # Redirects are reported as their original status, avoiding hidden target changes.
+                # Redirects are reported as their original status, avoiding
+                # hidden target changes.
                 $handler.AllowAutoRedirect = $false
                 $handler.UseCookies = $false
                 $resource = New-Object System.Net.Http.HttpClient($handler)
@@ -55,7 +113,8 @@ function Invoke-MonitorCheck {
                 $message = 'HttpStatus'
             }
             default {
-                # Resolve separately so DNS lookup cannot exceed the check deadline.
+                # Resolve separately so DNS lookup cannot exceed the check
+                # deadline.
                 $dnsTask = [Net.Dns]::GetHostAddressesAsync($Check.HostName)
                 if (-not $dnsTask.Wait($timeoutMs)) { throw (New-Object TimeoutException) }
                 $addresses = $dnsTask.GetAwaiter().GetResult()
