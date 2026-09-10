@@ -35,6 +35,7 @@ if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
   )
 }
 
+# Load required .NET assemblies for WPF and HTTP client functionality.
 Add-Type -AssemblyName @(
   'PresentationFramework'
   'PresentationCore'
@@ -42,6 +43,8 @@ Add-Type -AssemblyName @(
   'System.Net.Http'
 )
 
+# Load application components such as configuration, localization, logging,
+# checks, core monitor, and UI controller.
 $components = @(
   'Configuration/Configuration.ps1',
   'Localization/Localization.ps1',
@@ -55,6 +58,8 @@ foreach ($component in $components) {
   . (Join-Path $PSScriptRoot $component)
 }
 
+# Resolve the full path of the configuration file and initialize the
+# configuration state.
 $pathProvider = $ExecutionContext.SessionState.Path
 $ConfigurationPath = $pathProvider.GetUnresolvedProviderPathFromPSPath(
   $ConfigurationPath
@@ -72,6 +77,8 @@ catch {
     $language = 'fr-FR'
   }
 
+  # If configuration loading fails, fall back to a default configuration with
+  # the appropriate language.
   $configuration = @{
     Language       = $language
     RefreshSeconds = 30
@@ -80,6 +87,7 @@ catch {
   }
 }
 
+# Show the main monitoring window with the resolved configuration and state.
 Show-MonitorWindow `
   -Configuration $configuration `
   -Path $ConfigurationPath `
