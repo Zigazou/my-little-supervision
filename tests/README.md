@@ -26,7 +26,8 @@ required.
 
 1. Launch the example without elevation. Confirm the local Ping completes and
    disabled rows remain disabled. Resize the window and test keyboard
-   navigation.
+   navigation. Confirm all four toolbar buttons show their icons and localized
+   labels at 100% and 150% display scaling, and Refresh dims while checks run.
 2. Open a custom configuration with at least two groups. Search using literal
    punctuation, synchronize sidebar/dropdown selection, and filter incidents.
 3. Select a result; verify details, translated messages, history, and journal.
