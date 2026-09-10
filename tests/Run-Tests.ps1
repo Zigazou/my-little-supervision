@@ -130,6 +130,37 @@ try {
 
   Assert-True ($configuration.Checks.Count -eq 4) 'Example configuration loads'
 
+  # Exercise the UI configuration wiring without requiring WPF controls.
+  & {
+    function New-MonitorState {
+      param($Configuration, $CheckScriptPath)
+      @{ Configuration = $Configuration; Results = @{}; Paused = $false }
+    }
+    function Update-CheckRows { }
+
+    $script:state = $null
+    $script:sourceDirectory = Join-Path $root 'src'
+    $script:window = @{ Resources = @{} }
+    $script:controls = @{
+      ChecksDataGrid = @{ Columns = @(1..8 | ForEach-Object { @{ Header = '' } }) }
+      HistoryDataGrid = @{ Columns = @(1..4 | ForEach-Object { @{ Header = '' } }) }
+      PauseMenuItem = @{ IsChecked = $false }
+      GroupsListBox = @{ ItemsSource = $null; SelectedIndex = -1 }
+      GroupComboBox = @{ ItemsSource = $null; SelectedIndex = -1 }
+    }
+
+    try {
+      Set-UiConfiguration -Configuration $configuration -Path 'example.psd1'
+      $uiGroups = $script:controls.GroupComboBox.ItemsSource
+      Assert-True ($uiGroups.Count -eq 4 -and $uiGroups[0].Value -eq '') 'UI initialization passes configuration to group options'
+      Assert-True ($script:state.Results.Count -eq 4) 'UI initialization creates all initial results'
+    }
+    finally {
+      $script:state = $null
+      Remove-Variable -Scope Script -Name sourceDirectory, window, controls, configurationPath, strings -ErrorAction SilentlyContinue
+    }
+  }
+
   $groups = @(Get-CheckGroupOptions -Configuration $configuration -AllLabel 'Tous')
   Assert-True (($groups.Label -join '|') -eq 'Tous (4)|Local (1)|Services (1)|Web (2)') 'Group labels and counts match the example configuration'
   Assert-True (($groups.Value -join '|') -eq '|Local|Services|Web') 'Group filter values preserve configured names'

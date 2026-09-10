@@ -383,8 +383,8 @@ function Set-UiConfiguration {
     $script:state.Results[$check.Name] = `
       New-CheckResult $check $status $status
   }
-  $groups = @(Get-CheckGroupOptions
-    -Configuration $Configuration `
+  $groups = @(Get-CheckGroupOptions `
+      -Configuration $Configuration `
       -AllLabel (Get-UiText 'Label.All')
   )
 
