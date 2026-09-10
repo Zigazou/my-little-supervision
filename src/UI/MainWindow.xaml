@@ -9,6 +9,57 @@
         MinWidth="960" MinHeight="640" WindowStartupLocation="CenterScreen"
         Background="#F3F5F8" FontFamily="Segoe UI" FontSize="13">
     <Window.Resources>
+        <!-- Vector icons stay sharp at Windows display scaling levels without extra fonts or files. -->
+        <DrawingImage x:Key="RefreshIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Brush="#439B45" Geometry="M 20,9 A 8,8 0 0 0 6,5 L 3,2 L 3,10 L 11,10 L 8,7 A 5,5 0 0 1 17,9 Z M 4,15 A 8,8 0 0 0 18,19 L 21,22 L 21,14 L 13,14 L 16,17 A 5,5 0 0 1 7,15 Z"/>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="ExportIcon">
+            <DrawingImage.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#EAF3FC" Geometry="M 3,1 L 14,1 L 19,6 L 19,22 L 3,22 Z">
+                        <GeometryDrawing.Pen><Pen Brush="#447DA8" Thickness="1"/></GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#8AB7DC" Geometry="M 14,1 L 14,6 L 19,6 Z M 6,7 L 11,7 L 11,9 L 6,9 Z M 6,11 L 14,11 L 14,13 L 6,13 Z"/>
+                    <GeometryDrawing Brush="#439B45" Geometry="M 12,15 L 18,15 L 18,11 L 24,17 L 18,23 L 18,19 L 12,19 Z"/>
+                </DrawingGroup>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="FolderIcon">
+            <DrawingImage.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#FFE09A" Geometry="M 1,5 L 1,2 L 9,2 L 12,5 L 23,5 L 23,21 L 1,21 Z">
+                        <GeometryDrawing.Pen><Pen Brush="#B98222" Thickness="1"/></GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#F5BE48" Geometry="M 1,8 L 23,8 L 23,21 L 1,21 Z">
+                        <GeometryDrawing.Pen><Pen Brush="#B98222" Thickness="1"/></GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="OpenIcon">
+            <DrawingImage.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#EAF3FC" Geometry="M 5,1 L 16,1 L 21,6 L 21,23 L 5,23 Z">
+                        <GeometryDrawing.Pen><Pen Brush="#447DA8" Thickness="1"/></GeometryDrawing.Pen>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#8AB7DC" Geometry="M 16,1 L 16,6 L 21,6 Z M 9,17 L 17,17 L 17,19 L 9,19 Z"/>
+                    <GeometryDrawing Brush="#327FC1" Geometry="M 0,9 L 9,9 L 9,5 L 16,12 L 9,19 L 9,15 L 0,15 Z"/>
+                </DrawingGroup>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <Style x:Key="ToolbarIconStyle" TargetType="Image">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="14,7"/>
             <Setter Property="Margin" Value="3"/>
@@ -49,10 +100,30 @@
         </Menu>
         <Border DockPanel.Dock="Top" BorderBrush="#CFD6DF" BorderThickness="0,0,0,1" Padding="8">
             <StackPanel Orientation="Horizontal">
-                <Button x:Name="RefreshButton" Content="{DynamicResource Action.Refresh}"/>
-                <Button x:Name="ExportButton" Content="{DynamicResource Action.Export}"/>
-                <Button x:Name="FolderButton" Content="{DynamicResource Action.Folder}"/>
-                <Button x:Name="OpenButton" Content="{DynamicResource Action.Open}"/>
+                <Button x:Name="RefreshButton" AutomationProperties.Name="{DynamicResource Action.Refresh}">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource RefreshIcon}" Style="{StaticResource ToolbarIconStyle}"/>
+                        <TextBlock Text="{DynamicResource Action.Refresh}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="ExportButton" AutomationProperties.Name="{DynamicResource Action.Export}">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource ExportIcon}" Style="{StaticResource ToolbarIconStyle}"/>
+                        <TextBlock Text="{DynamicResource Action.Export}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="FolderButton" AutomationProperties.Name="{DynamicResource Action.Folder}">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource FolderIcon}" Style="{StaticResource ToolbarIconStyle}"/>
+                        <TextBlock Text="{DynamicResource Action.Folder}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="OpenButton" AutomationProperties.Name="{DynamicResource Action.Open}">
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{StaticResource OpenIcon}" Style="{StaticResource ToolbarIconStyle}"/>
+                        <TextBlock Text="{DynamicResource Action.Open}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
         <StatusBar DockPanel.Dock="Bottom" Padding="10,6" Background="#E8EDF3">
