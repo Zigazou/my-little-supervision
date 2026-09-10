@@ -71,6 +71,15 @@ function Update-CheckRows {
     Update-Details
 }
 
+function Get-CheckGroupOptions {
+    param([hashtable] $Configuration, [string] $AllLabel)
+    [pscustomobject]@{ Label = ('{0} ({1})' -f $AllLabel, $Configuration.Checks.Count); Value = '' }
+    # Windows PowerShell 5.1 requires an expression to group by a hashtable key.
+    $Configuration.Checks | Group-Object -Property { $_['Group'] } | Sort-Object Name | ForEach-Object {
+        [pscustomobject]@{ Label = '{0} ({1})' -f $_.Name, $_.Count; Value = $_.Name }
+    }
+}
+
 function Set-UiConfiguration {
     param([hashtable] $Configuration, [string] $Path)
     if ($null -ne $script:state) { Close-MonitorState $script:state }
@@ -93,8 +102,7 @@ function Set-UiConfiguration {
         if (-not $check.Enabled) { $status = 'Disabled' }
         $script:state.Results[$check.Name] = New-CheckResult $check $status $status
     }
-    $groups = @([pscustomobject]@{ Label = ('{0} ({1})' -f (Get-UiText 'Label.All'), $Configuration.Checks.Count); Value = '' })
-    $groups += @($Configuration.Checks | Group-Object -Property Group | Sort-Object Name | ForEach-Object { [pscustomobject]@{ Label = '{0} ({1})' -f $_.Name, $_.Count; Value = $_.Name } })
+    $groups = @(Get-CheckGroupOptions -Configuration $Configuration -AllLabel (Get-UiText 'Label.All'))
     $script:controls.GroupsListBox.ItemsSource = $groups
     $script:controls.GroupComboBox.ItemsSource = $groups
     $script:controls.GroupComboBox.SelectedIndex = 0

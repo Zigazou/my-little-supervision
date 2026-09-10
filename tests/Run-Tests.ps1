@@ -4,7 +4,7 @@ param([switch] $SkipNetwork)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-foreach ($path in @('Configuration/Configuration.ps1', 'Localization/Localization.ps1', 'Checks/Checks.ps1', 'Core/Monitor.ps1', 'Logging/Logging.ps1')) { . (Join-Path $root "src/$path") }
+foreach ($path in @('Configuration/Configuration.ps1', 'Localization/Localization.ps1', 'Checks/Checks.ps1', 'Core/Monitor.ps1', 'Logging/Logging.ps1', 'UI/Controller.ps1')) { . (Join-Path $root "src/$path") }
 $script:passed = 0
 function Assert-True {
     param([bool] $Condition, [string] $Name)
@@ -30,6 +30,11 @@ try {
     }
     $configuration = Import-MonitorConfiguration (Join-Path $root 'config/example.psd1')
     Assert-True ($configuration.Checks.Count -eq 4) 'Example configuration loads'
+    $groups = @(Get-CheckGroupOptions -Configuration $configuration -AllLabel 'Tous')
+    Assert-True (($groups.Label -join '|') -eq 'Tous (4)|Local (1)|Services (1)|Web (2)') 'Group labels and counts match the example configuration'
+    Assert-True (($groups.Value -join '|') -eq '|Local|Services|Web') 'Group filter values preserve configured names'
+    $emptyGroups = @(Get-CheckGroupOptions -Configuration @{ Checks = @() } -AllLabel 'All')
+    Assert-True ($emptyGroups.Count -eq 1 -and $emptyGroups[0].Label -eq 'All (0)' -and $emptyGroups[0].Value -eq '') 'Empty configuration only offers the all-groups option'
     Assert-True ($configuration.Checks[1].ExpectedStatusCodes[0] -eq 200) 'Expected HTTP codes preserved'
     Set-Content -LiteralPath $script:testPath -Value '@{ConfigurationVersion=1;Checks=@()}' -Encoding UTF8
     Assert-True ((Import-MonitorConfiguration $script:testPath).Checks.Count -eq 0) 'Empty configuration supported'
@@ -37,6 +42,8 @@ try {
     Set-Content -LiteralPath $script:testPath -Value $valid -Encoding UTF8
     $loaded = Import-MonitorConfiguration $script:testPath
     Assert-True ($loaded.Checks[0].Name -eq 'Été & <server>') 'Special characters survive import'
+    $defaultGroups = @(Get-CheckGroupOptions -Configuration $loaded -AllLabel 'All')
+    Assert-True ($defaultGroups.Count -eq 2 -and $defaultGroups[1].Label -eq 'Default (1)') 'Checks without a group use the default group'
     Assert-True ($loaded.Checks[0].TimeoutSeconds -eq 5 -and $loaded.MaxConcurrency -eq 4) 'Safe defaults applied'
     foreach ($case in @(
         @("@{ConfigurationVersion=2;Checks=@()}", 'Unsupported version'),
