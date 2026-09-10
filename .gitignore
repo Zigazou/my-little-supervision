@@ -1,0 +1,12 @@
+# Local configuration and runtime output
+/config/*.local.psd1
+/logs/
+*.log
+
+# Editor and operating system temporary files
+*.swp
+*.swo
+*~
+Thumbs.db
+Desktop.ini
+.DS_Store
