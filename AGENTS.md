@@ -4,14 +4,21 @@
 
 **Project name:** `my-little-supervision`
 
-`my-little-supervision` is a Windows-only supervision/monitoring application written in PowerShell.
+`my-little-supervision` is a supervision/monitoring application targeting Windows
+with a native WPF interface and Linux with a browser interface.
 
 The application uses:
 
 - **PowerShell** for application logic.
-- **WPF/XAML** for the graphical user interface.
+- **WPF/XAML** for the Windows graphical user interface.
+- **HTML/CSS/JavaScript in a browser** for the Linux user interface, served by a
+  local backend that executes monitoring checks.
 - **PSD1** files for user-editable configuration.
-- Native Windows/.NET capabilities whenever possible.
+- Native platform/.NET capabilities whenever possible.
+
+**Avalonia must not be used.** Keep monitoring, configuration, result models,
+logging, and localization independent of either presentation layer. These are
+the target requirements; they do not imply that Linux support is already implemented.
 
 The application is intended to let users define checks that verify the availability or health of one or more servers or services, for example:
 
@@ -29,14 +36,20 @@ A primary project constraint is that the application must run on a **fresh Windo
 
 All contributors and coding agents must preserve the following principles.
 
-1. **Windows first**
-   - The project only targets Windows.
-   - Do not introduce cross-platform abstractions unless they clearly improve maintainability without increasing complexity.
+1. **Windows and Linux presentation layers**
+   - Windows uses WPF/XAML; Linux uses a browser connected to a local backend.
+   - Do not introduce Avalonia or another desktop UI framework for Linux.
+   - Share monitoring logic where practical and isolate platform-specific startup
+     and UI operations. Do not load WPF assemblies on Linux.
+   - Introduce cross-platform abstractions only when they serve these targets
+     and clearly improve maintainability without unnecessary complexity.
 
 2. **No administrator privileges**
    - Normal installation, configuration, startup, execution, monitoring, logging, and updates must not require elevation.
    - Do not write to protected system locations such as `C:\Program Files`, `C:\Windows`, HKLM registry keys, or other administrator-only resources at runtime.
    - Prefer per-user locations such as `%LOCALAPPDATA%`, `%APPDATA%`, or the application directory when writable and appropriate.
+   - On Linux, use appropriate per-user XDG locations with documented fallbacks;
+     do not require root, system services, or writes to system directories.
 
 3. **Fresh-install compatibility**
    - Prefer functionality available on a standard supported Windows installation.
@@ -135,6 +148,10 @@ Do not use translated strings as programmatic identifiers.
 ### Compatibility
 
 Unless the project explicitly changes its baseline, write code compatible with **Windows PowerShell 5.1**.
+
+This baseline applies to Windows and shared PowerShell components. Linux may use
+PowerShell 7; document the required runtime and check its availability gracefully.
+Do not require PowerShell 7 on Windows merely to support Linux.
 
 Do not assume PowerShell 7 is installed on a fresh Windows machine.
 
@@ -304,6 +321,22 @@ Where practical:
 - Prefer standard WPF controls unless customization is justified.
 
 ---
+
+## Linux Browser Interface Guidelines
+
+- Keep browser presentation separate from the local monitoring backend. Execute
+  Ping, TCP, and HTTP probes in the backend, not in browser JavaScript.
+- Bind the local server to loopback by default using an unprivileged port. Do not
+  expose monitoring data or controls to the network by default.
+- Validate API input, restrict accepted origins and hosts, and protect
+  state-changing endpoints against cross-site requests.
+- Render configuration labels and diagnostic values as text, never as trusted HTML.
+- Keep requests and monitoring concurrency bounded. Slow checks must not block
+  the interface or unrelated API requests.
+- Reuse English and French localization resources and preserve accessible labels,
+  keyboard navigation, and status text alongside colors.
+- Serve assets locally without requiring CDNs or public internet access.
+- Document Linux runtime requirements, startup, shutdown, and per-user data paths.
 
 ## PSD1 Configuration Guidelines
 
@@ -768,6 +801,8 @@ Commit messages, branch names, comments, and technical documentation should pref
 A change is considered complete only when all applicable points below are satisfied:
 
 - The feature works on supported Windows systems.
+- Changes to shared components work on supported Linux runtimes, and Linux UI
+  features work in the browser without loading WPF or using Avalonia.
 - It does not require administrator privileges.
 - It does not add an unnecessary runtime dependency.
 - It remains compatible with the project's supported PowerShell baseline.
@@ -802,5 +837,6 @@ When an AI coding agent works on this repository, it must:
 12. Keep source code in English.
 13. Keep UI text localizable and maintain French translations when localization exists.
 14. Explain any unavoidable compatibility, security, or privilege trade-off in the change description.
+15. Preserve Windows/WPF and Linux/browser as the target interfaces; never use Avalonia.
 
 If a requested implementation conflicts with these constraints, do not silently violate them. Identify the conflict and choose the safest compatible design whenever possible.
