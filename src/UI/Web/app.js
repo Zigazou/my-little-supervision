@@ -30,7 +30,10 @@ let state;
  * history responses.
  * @type {import("./api.js").Selection}
  */
-let selection = { name: null, history: [] };
+let selection = {
+  name: null,
+  history: []
+};
 
 /**
  * Latest user-action failure key or fallback message; cleared after a
@@ -69,7 +72,11 @@ async function loadConfiguration() {
   configuration = await request('/api/configuration');
   setTranslations(configuration);
   applyConfiguration(configuration);
-  selection = { name: null, history: [] };
+
+  selection = {
+    name: null,
+    history: []
+  };
 }
 
 /**
@@ -159,7 +166,11 @@ async function selectCheck(event) {
     return;
   }
 
-  selection = { name: button.dataset.checkName, history: [] };
+  selection = {
+    name: button.dataset.checkName,
+    history: []
+  };
+
   render();
 
   try {
@@ -223,6 +234,7 @@ function reloadConfiguration() {
  */
 function downloadExport() {
   const link = document.createElement('a');
+
   link.href = exportUrl(readFilters());
   link.download = 'monitoring.csv';
   link.click();

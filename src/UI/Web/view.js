@@ -156,9 +156,11 @@ function appendCell(row, value, className) {
 }
 
 /**
- * Updates sorted group options only when needed, preserving a still-valid selected group.
+ * Updates sorted group options only when needed, preserving a still-valid
+ * selected group.
  *
- * @param {CheckRow[]} checks - Configured check rows from the current status snapshot.
+ * @param {CheckRow[]} checks - Configured check rows from the current status
+ * snapshot.
  * @returns {void} No return value.
  */
 function renderGroups(checks) {
@@ -312,10 +314,13 @@ function successRate(history) {
 }
 
 /**
- * Rebuilds details and history for the selected resource, or shows the selection prompt.
+ * Rebuilds details and history for the selected resource, or shows the
+ * selection prompt.
  *
- * @param {CheckRow[]} checks - Configured check rows from the current status snapshot.
- * @param {Selection} selection - Selected check name and its current session history.
+ * @param {CheckRow[]} checks - Configured check rows from the current status
+ * snapshot.
+ * @param {Selection} selection - Selected check name and its current session
+ * history.
  * @returns {void} No return value.
  */
 export function renderDetails(checks, selection) {
@@ -355,10 +360,12 @@ export function renderDetails(checks, selection) {
   const fragment = document.createDocumentFragment();
   for (const result of selection.history) {
     const row = document.createElement('tr');
+
     appendCell(row, timestamp(result.Timestamp));
     appendCell(row, text(`Status.${result.Status}`));
     appendCell(row, result.DurationMs);
     appendCell(row, resultMessage(result));
+
     fragment.append(row);
   }
 
@@ -366,9 +373,11 @@ export function renderDetails(checks, selection) {
 }
 
 /**
- * Displays total, online, degraded and offline/error counts across all configured checks.
+ * Displays total, online, degraded and offline/error counts across all
+ * configured checks.
  *
- * @param {CheckRow[]} checks - Configured check rows from the current status snapshot.
+ * @param {CheckRow[]} checks - Configured check rows from the current status
+ * snapshot.
  * @returns {void} No return value.
  */
 function renderSummary(checks) {

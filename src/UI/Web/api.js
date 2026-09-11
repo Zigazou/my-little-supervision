@@ -94,14 +94,18 @@ export async function request(path, data, token) {
       'Content-Type': 'application/json',
       'X-CSRF-Token': token
     };
+
     options.body = JSON.stringify(data);
   }
 
   const response = await fetch(path, options);
+
   if (!response.ok) {
     let key = 'Error.Action';
+
     try {
       const failure = await response.json();
+
       if (failure.error) {
         key = failure.error;
       }
@@ -110,6 +114,8 @@ export async function request(path, data, token) {
         'Non-JSON failures still reach the caller through the fallback error.'
       );
     }
+
+    // 
     throw new Error(key);
   }
 
