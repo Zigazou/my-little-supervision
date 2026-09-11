@@ -574,21 +574,37 @@ function Start-WebBrowser {
   [CmdletBinding()]
   param([Parameter(Mandatory)][string] $Url)
 
+  # Attempt to launch Chromium in application mode first.
   foreach ($browserName in @('chromium', 'chromium-browser')) {
-    $browser = Get-Command -Name $browserName -CommandType Application `
-      -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($null -eq $browser) { continue }
+    $browser = Get-Command `
+      -Name $browserName `
+      -CommandType Application `
+      -ErrorAction SilentlyContinue `
+    | Select-Object -First 1
+
+    if ($null -eq $browser) {
+      continue
+    }
 
     try {
-      Start-Process -FilePath $browser.Path -ArgumentList ('--app=' + $Url) `
-        -ErrorAction Stop | Out-Null
+      Start-Process `
+        -FilePath $browser.Path `
+        -ArgumentList ('--app=' + $Url) `
+        -ErrorAction Stop `
+      | Out-Null
+
       return
     }
     catch {
-      Write-Verbose ("Chromium launch failed ({0}): {1}" -f $browserName, $_.Exception.Message)
+      Write-Verbose (
+        "Chromium launch failed ({0}): {1}" -f
+        $browserName,
+        $_.Exception.Message
+      )
     }
   }
 
+  # Launch the default browser if Chromium was not used.
   Start-Process -FilePath $Url -ErrorAction Stop | Out-Null
 }
 
