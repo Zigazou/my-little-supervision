@@ -60,6 +60,9 @@ Manual browser acceptance:
 
 1. Start with `./start.sh`, verify the printed loopback address opens, then repeat
    with `-NoBrowser` and a different `-Port`. An occupied port must fail clearly.
+   With `chromium` or `chromium-browser` on PATH, verify a dedicated window opens
+   without tabs or an address bar. Without either executable, verify the default
+   browser opens. Closing the application window must leave monitoring running.
 2. Use keyboard navigation to select rows, search literal punctuation, filter
    groups/incidents, inspect history, and download filtered CSV with Unicode.
 3. Pause and refresh. Change configuration during a slow check; ensure the page

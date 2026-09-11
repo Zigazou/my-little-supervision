@@ -54,9 +54,13 @@ Presentation files are separated by interface: WPF files live under
 The Web server binds **only `127.0.0.1`**, on port 8123 by default. Use `-Port`
 with an available port from 1024 to 65535 if it is occupied. Open the printed
 `http://127.0.0.1:8123/` address, using that exact host. Browser launch is optional
-and failure does not stop monitoring. `-NoBrowser` suppresses it. Press **Ctrl+C
+and failure does not stop monitoring. If `chromium` or `chromium-browser` is
+available on PATH, the dashboard opens in application mode, in a dedicated
+window without tabs or an address bar. Otherwise, or if starting Chromium throws
+an error, the default browser opens the URL. Chromium is optional and is not
+installed automatically. `-NoBrowser` suppresses browser launch. Press **Ctrl+C
 in the launching terminal** to stop the server and dispose monitoring workers;
-closing the browser tab does not stop monitoring. Active network work may take
+closing the browser tab or application window does not stop monitoring. Active network work may take
 up to its configured timeout to finish during shutdown.
 
 The browser supports group/search/incident filters, details, session history and
